@@ -9,13 +9,11 @@
 
 #include "messages.hpp"
 
-#include <iostream>
 #include <optional>
 
 #include "absl/memory/memory.h"
 
-namespace lcm {
-namespace protocol {
+namespace nsyslcm {
 
 using json = nlohmann::json;
 
@@ -51,29 +49,10 @@ std::optional<std::unique_ptr<BaseMessage>> MessageFactory::Unmarshal(
   }
 }
 
-}  // namespace protocol
-}  // namespace lcm
-
-int main(int argc, char* argv[]) {
-  using json = nlohmann::json;
-  auto welcome = lcm::protocol::CreateWelcomeMessage(1234, json::object());
-
-  if (welcome == nullptr) {
-    std::cerr << "Protocol error" << std::endl;
-    return 1;
-  }
-
-  std::cout << "Type: " << welcome->message_type() << std::endl;
-  std::cout << "Session-ID: " << welcome->session_id() << std::endl;
-  std::cout << "Detaiks: " << welcome->details() << std::endl;
-
-  auto msg = lcm::protocol::MessageFactory::Unmarshal("[1,\"blaaa\", {}]");
-  if (!msg) {
-    std::cerr << "Next protocol error" << std::endl;
-    return 1;
-  }
-
-  std::cout << "Type: " << (*msg)->message_type() << std::endl;
-
-  return 0;
+std::optional<std::unique_ptr<BaseMessage>> Unmarshal(
+    const std::string_view& v) {
+  return MessageFactory::Unmarshal(v);
 }
+
+
+}  // namespace nsyslcm

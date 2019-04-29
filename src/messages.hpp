@@ -8,8 +8,7 @@
 
 #include "nlohmann/json.hpp"
 
-namespace lcm {
-namespace protocol {
+namespace nsyslcm {
 
 using json = nlohmann::json;
 
@@ -23,7 +22,7 @@ class MessageFactory;
 
 class BaseMessage {
  public:
-  // BaseMessage is not copyable.
+  // BaseMessage and inheritated classes are not copyable.
   BaseMessage(const BaseMessage&) = delete;
   BaseMessage& operator=(const BaseMessage&) = delete;
 
@@ -42,10 +41,6 @@ class BaseMessage {
 
 class HelloMessage : public BaseMessage {
  public:
-  // HelloMessage is not copyable.
-  HelloMessage(const HelloMessage&) = delete;
-  HelloMessage& operator=(const HelloMessage&) = delete;
-
   std::string realm() { return realm_; }
   json details() { return details_; }
 
@@ -65,10 +60,6 @@ class HelloMessage : public BaseMessage {
 
 class WelcomeMessage : public BaseMessage {
  public:
-  // WelcomeMessage is not copyable.
-  WelcomeMessage(const WelcomeMessage&) = delete;
-  WelcomeMessage& operator=(const WelcomeMessage&) = delete;
-
   uint32_t session_id() { return session_id_; }
   json details() { return details_; }
 
@@ -101,7 +92,11 @@ class MessageFactory {
   MessageFactory();
 };
 
-}  // namespace protocol
-}  // namespace lcm
+std::unique_ptr<WelcomeMessage> CreateWelcomeMessage(uint32_t session_id,
+                                                     json::object_t details);
+std::optional<std::unique_ptr<BaseMessage>> Unmarshal(
+    const std::string_view& v);
+
+}  // namespace nsyslcm
 
 #endif  // SRC_MESSAGES_HPP_
