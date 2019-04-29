@@ -4,5 +4,4 @@ Makefile
 bin/
 build/
 CMakeFiles/
-.vscode/settings.json
-.vscode/ipch/
+.vscode/

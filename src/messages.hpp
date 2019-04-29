@@ -11,6 +11,8 @@
 namespace lcm {
 namespace protocol {
 
+using json = nlohmann::json;
+
 enum MessageTypes {
   kUnknownMessageType = 0,
   kHelloMessageType = 1,
