@@ -1,0 +1,8 @@
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+bin/
+build/
+CMakeFiles/
+.vscode/settings.json
+.vscode/ipch/
