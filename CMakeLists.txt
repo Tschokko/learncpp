@@ -14,25 +14,30 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set compiler flags
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "-msse4 -O2 -Wall -Wextra")
-
-# Set Abseil C++ flags
-set(ABSL_RUN_TESTS OFF)
-set(ABSL_USE_GOOGLETEST_HEAD OFF)
-set(BUILD_TESTING OFF)
 
 # Include files
 include_directories("${PROJECT_SOURCE_DIR}/include")
-
-include_directories(thirdparty/nlohmann/json/include)
+# include_directories(thirdparty/nlohmann/json/include)
 
 # Source files
 file(GLOB SOURCES "src/*.cpp")
 
+#
 # Third party sources
+#
+
+# Abseil C++
+set(ABSL_RUN_TESTS OFF)
+set(ABSL_USE_GOOGLETEST_HEAD OFF)
+set(BUILD_TESTING OFF)
 add_subdirectory(thirdparty/abseil-cpp)
+
+# JSON
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(thirdparty/nlohmann/json)
 
+# Our target
 add_executable(learncpp ${SOURCES})
-target_link_libraries(learncpp absl::base absl::memory)
+target_link_libraries(learncpp absl::base absl::memory nlohmann_json::nlohmann_json)

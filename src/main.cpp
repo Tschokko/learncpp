@@ -9,7 +9,8 @@
 
 int main(int argc, char* argv[]) {
   using json = nlohmann::json;
-  auto welcome = nsyslcm::CreateWelcomeMessage(1234, json::object());
+  auto welcome =
+      nsys::devicecontrolv1::CreateWelcomeMessage(1234, json::object());
 
   if (welcome == nullptr) {
     std::cerr << "Protocol error" << std::endl;
@@ -20,7 +21,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Session-ID: " << welcome->session_id() << std::endl;
   std::cout << "Detaiks: " << welcome->details() << std::endl;
 
-  auto msg = nsyslcm::Unmarshal("[1,\"blaaa\", {}]");
+  auto msg = nsys::devicecontrolv1::UnmarshalMessage("[1,\"blaaa\", {}]");
   if (!msg) {
     std::cerr << "Next protocol error" << std::endl;
     return 1;
