@@ -16,11 +16,12 @@
 namespace nsys::devicecontrolv1 {
 
 using json = nlohmann::json;
+using namespace nsys;
 
 static inline bool IsValidJsonMessage(const json& j,
                                       MessageTypes expected_msg_type) {
   // We expect an array with at least one element, the message type
-  if (!j.is_array() && j.size() == 0) {
+  if (!j.is_array() || j.size() == 0) {
     return false;
   }
 
@@ -38,34 +39,34 @@ static inline bool IsValidJsonMessage(const json& j,
   return true;
 }
 
-std::optional<std::unique_ptr<HelloMessage>> HelloMessage::Parse(
-    const json& j) {
+result::UniquePtr<HelloMessage> HelloMessage::Parse(const json& j) {
   if (!IsValidJsonMessage(j, kHelloMessageType)) {
-    return nullptr;
+    return result::UniquePtr<HelloMessage>::Err(kErrUnexpectedMessageType);
   }
 
   // Realm should be a string
   if (!j.at(1).is_string()) {
-    return nullptr;
+    return result::UniquePtr<HelloMessage>::Err(kErrInvalidRealm);
   }
 
   // Everything is fine, let's create a hello message
-  return absl::WrapUnique(new HelloMessage(j.at(1), j.at(2)));
+  return result::UniquePtr<HelloMessage>::Ok(
+      new HelloMessage(j.at(1), j.at(2)));
 }
 
-std::optional<std::unique_ptr<WelcomeMessage>> WelcomeMessage::Parse(
-    const json& j) {
+result::UniquePtr<WelcomeMessage> WelcomeMessage::Parse(const json& j) {
   if (!IsValidJsonMessage(j, kWelcomeMessageType)) {
-    return nullptr;
+    return result::UniquePtr<WelcomeMessage>::Err(kErrUnexpectedMessageType);
   }
 
   // Session ID should be an unsigned integer
   if (!j.at(1).is_number_unsigned()) {
-    return nullptr;
+    return result::UniquePtr<WelcomeMessage>::Err(kErrInvalidSessionID);
   }
 
   // Everything is fine, let's create a welcome message
-  return absl::WrapUnique(new WelcomeMessage(j.at(1), j.at(2)));
+  return result::UniquePtr<WelcomeMessage>::Ok(
+      new WelcomeMessage(j.at(1), j.at(2)));
 }
 
 std::unique_ptr<HelloMessage> MessageFactory::CreateHelloMessage(
@@ -88,7 +89,34 @@ std::unique_ptr<WelcomeMessage> CreateWelcomeMessage(uint32_t session_id,
   return MessageFactory::CreateWelcomeMessage(session_id, details);
 }
 
-std::optional<std::unique_ptr<BaseMessage>> MessageFactory::UnmarshalMessage(
+result::Result<MessageTypes> SeekMessageType(const std::string_view& v) {
+  // Parse JSON payload and ensure that we do not throw an execpetion
+  auto j = json::parse(v, nullptr, false);
+
+  // We expect an array with at least one element, the message type
+  if (!j.is_array() || j.size() == 0) {
+    return result::Result<MessageTypes>::Error(kErrInvalidPayload);
+  }
+
+  // Message type should be an integer
+  auto msg_type = j.at(0);
+  if (!msg_type.is_number_integer()) {
+    return result::Result<MessageTypes>::Error(kErrInvalidMessageType);
+  }
+
+  // Return only a known message type otherwise an error
+  switch (static_cast<int>(msg_type)) {
+    case kHelloMessageType:
+    case kWelcomeMessageType:
+      return result::Result<MessageTypes>::Ok(
+          static_cast<MessageTypes>(msg_type));
+    default:
+      return result::Result<MessageTypes>::Error(kErrUnknownMessageType);
+  }
+}
+
+/*
+nsys::Result<BaseMessage> MessageFactory::UnmarshalMessage(
     const std::string_view& v) {
   auto j = json::parse(v);
 
@@ -96,31 +124,33 @@ std::optional<std::unique_ptr<BaseMessage>> MessageFactory::UnmarshalMessage(
 
   // We expect an array with at least one element, the message type.
   if (!j.is_array() && j.size() == 0) {
-    return nullptr;
+    return nsys::Error<BaseMessage>(kErrInvalidPayload);
   }
 
   // Message type should be an integer value
   auto msg_type = j.at(0);
   if (!msg_type.is_number_integer()) {
-    return nullptr;
+    return nsys::Error<BaseMessage>(kErrInvalidMessagType);
   }
 
   // Unmarshal the message by message type
   switch (static_cast<int>(msg_type)) {
     case kHelloMessageType: {
-      return HelloMessage::Parse(j);
+      auto result = HelloMessage::Parse(j);
+      if (result.has_error()) return nsys::Error<BaseMessage>(123);
+      return nsys::Value<BaseMessage>(result.unwrap());
     }
     case kWelcomeMessageType: {
       return WelcomeMessage::Parse(j);
     }
     default:
-      return nullptr;
+      // We received a message but with unknown message type
+      return nsys::Value<BaseMessage>(new BaseMessage);
   }
 }
 
-std::optional<std::unique_ptr<BaseMessage>> UnmarshalMessage(
-    const std::string_view& v) {
+nsys::Result<BaseMessage> UnmarshalMessage(const std::string_view& v) {
   return MessageFactory::UnmarshalMessage(v);
-}
+}*/
 
 }  // namespace nsys::devicecontrolv1

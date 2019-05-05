@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set compiler flags
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-msse4 -O2 -Wall -Wextra")
 
 # Include files
@@ -38,6 +38,18 @@ add_subdirectory(thirdparty/abseil-cpp)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(thirdparty/nlohmann/json)
 
+# Websocketpp
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+include_directories(thirdparty/websocketpp)
+include_directories(thirdparty/asio-1.12.2/include)
+add_subdirectory(thirdparty/websocketpp)
+
+# spdlog
+include_directories(thirdparty/spdlog/include)
+add_subdirectory(thirdparty/spdlog)
+
 # Our target
 add_executable(learncpp ${SOURCES})
-target_link_libraries(learncpp absl::base absl::memory nlohmann_json::nlohmann_json)
+# 
+target_link_libraries(learncpp Threads::Threads absl::base absl::memory nlohmann_json::nlohmann_json)

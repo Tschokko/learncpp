@@ -8,9 +8,21 @@
 
 #include "nlohmann/json.hpp"
 
+#include "result.hpp"
+
 namespace nsys::devicecontrolv1 {
 
 using json = nlohmann::json;
+
+enum ErrorCodes {
+  kErrNone = 0,
+  kErrInvalidPayload = 1,
+  kErrInvalidMessageType = 2,
+  kErrUnknownMessageType = 3,
+  kErrUnexpectedMessageType = 4,
+  kErrInvalidRealm = 5,
+  kErrInvalidSessionID = 6,
+};
 
 enum MessageTypes {
   kUnknownMessageType = 0,
@@ -41,7 +53,7 @@ class BaseMessage {
 
 class HelloMessage : public BaseMessage {
  public:
-  static std::optional<std::unique_ptr<HelloMessage>> Parse(const json& j);
+  static nsys::result::UniquePtr<HelloMessage> Parse(const json& j);
 
   std::string realm() { return realm_; }
   json details() { return details_; }
@@ -62,7 +74,7 @@ class HelloMessage : public BaseMessage {
 
 class WelcomeMessage : public BaseMessage {
  public:
-  static std::optional<std::unique_ptr<WelcomeMessage>> Parse(const json& j);
+  static nsys::result::UniquePtr<WelcomeMessage> Parse(const json& j);
 
   uint32_t session_id() { return session_id_; }
   json details() { return details_; }
@@ -88,8 +100,8 @@ class MessageFactory {
   static std::unique_ptr<WelcomeMessage> CreateWelcomeMessage(
       uint32_t session_id, const json& details);
 
-  static std::optional<std::unique_ptr<BaseMessage>> UnmarshalMessage(
-      const std::string_view& v);
+  /*static nsys::Result<BaseMessage> UnmarshalMessage(const std::string_view&
+   * v);*/
 
   // Disable copy (and move) semantics.
   MessageFactory(const MessageFactory&) = delete;
@@ -104,8 +116,7 @@ std::unique_ptr<WelcomeMessage> CreateWelcomeMessage(uint32_t session_id,
 std::unique_ptr<HelloMessage> CreateHelloMessage(std::string realm,
                                                  const json& details);
 
-std::optional<std::unique_ptr<BaseMessage>> UnmarshalMessage(
-    const std::string_view& v);
+/*nsys::Result<BaseMessage> UnmarshalMessage(const std::string_view& v);*/
 
 }  // namespace nsys::devicecontrolv1
 
