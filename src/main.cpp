@@ -8,7 +8,6 @@
 #include "nlohmann/json.hpp"*/
 
 #include "server.hpp"
-
 #include "spdlog/spdlog.h"
 #include "websocketpp/common/thread.hpp"
 

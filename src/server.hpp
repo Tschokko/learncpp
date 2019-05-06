@@ -5,11 +5,13 @@
 #define SRC_SERVER_HPP_
 
 #define ASIO_STANDALONE
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
 
 #include <iostream>
+#include <optional>
 #include <set>
+
+#include "websocketpp/config/asio_no_tls.hpp"
+#include "websocketpp/server.hpp"
 
 namespace nsys::devicecontrol {
 
@@ -75,7 +77,12 @@ class Server {
   void OnOpen(connection_handle_t hdl);
   void OnClose(connection_handle_t hdl);
   void OnMessage(connection_handle_t hdl, message_ptr_t msg);
-  Session& GetSessionForHandle(connection_handle_t hdl);
+  auto GetSessionForHandle(connection_handle_t hdl) {
+    auto it = sessions_.find(hdl);
+    return (it == sessions_.end())
+               ? std::nullopt
+               : std::optional<std::reference_wrapper<Session>>{it->second};
+  };
 };
 
 }  // namespace nsys::devicecontrol

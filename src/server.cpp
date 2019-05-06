@@ -52,7 +52,6 @@ void Server::Run(uint16_t port) {
 };
 
 void Server::OnOpen(connection_handle_t hdl) {
-  // log::info("OnOpen called: {}", hdl.lock().get());
   {
     lock_guard<mutex> guard(actions_lock_);
     actions_.push(ServerAction(kServerActionSubscribe, hdl));
@@ -61,7 +60,6 @@ void Server::OnOpen(connection_handle_t hdl) {
 }
 
 void Server::OnClose(connection_handle_t hdl) {
-  // log::info("OnClose called: {}", hdl.lock().get());
   {
     lock_guard<mutex> guard(actions_lock_);
     actions_.push(ServerAction(kServerActionUnsubscribe, hdl));
@@ -100,6 +98,7 @@ void Server::OnMessage(connection_handle_t hdl, message_ptr_t msg) {
     lock_guard<mutex> guard(actions_lock_);
     actions_.push(ServerAction(kServerActionMessage, hdl, msg));
   }
+
   action_condition_.notify_one();
 }
 
@@ -121,37 +120,27 @@ void Server::Process() {
     switch (a.type) {
       case kServerActionSubscribe: {
         log::info("Insert connection: {}", a.hdl.lock().get());
-        // lock_guard<mutex> guard(connections_lock_);
-        // connections_.insert(a.hdl);
-
         lock_guard<mutex> guard(sessions_lock_);
-
-        /*Session session;
-        session.id = ++id;
-        sessions_[a.hdl] = session;*/
         sessions_[a.hdl] = Session(++id);
       } break;
       case kServerActionUnsubscribe: {
         log::info("Erase connection: {}", a.hdl.lock().get());
-        // lock_guard<mutex> guard(connections_lock_);
-        // connections_.erase(a.hdl);
-
         lock_guard<mutex> guard(sessions_lock_);
         sessions_.erase(a.hdl);
       } break;
       case kServerActionMessage: {
         auto session = GetSessionForHandle(a.hdl);
-
-        log::info("Process message for session {}: {}", session.id(),
-                  a.hdl.lock().get());
-
-        using std::ignore;
-        lock_guard<mutex> guadrd(sessions_lock_);
-        for (auto const& [hdl, ignore] : sessions_) {
-          // log::info("Send message to session {}: {}", session.id, a.msg);
-          endpoint_.send(hdl, a.msg);
+        if (!session) {
+          log::error("Cannot process message from invalid session");
+          break;
         }
 
+        log::info("Process message for session {}: {}", session->get().id(),
+                  a.hdl.lock().get());
+        lock_guard<mutex> guadrd(sessions_lock_);
+        for (auto const& [hdl, ignore] : sessions_) {
+          endpoint_.send(hdl, a.msg);
+        }
       } break;
       default:
         log::error("Unexpected server action type: {}", a.type);
@@ -160,18 +149,5 @@ void Server::Process() {
     log::info("Current connections: {}", sessions_.size());
   }
 }
-
-Session& Server::GetSessionForHandle(connection_handle_t hdl) {
-  auto it = sessions_.find(hdl);
-
-  if (it == sessions_.end()) {
-    // this connection is not in the list. This really shouldn't happen
-    // and probably means something else is wrong.
-    throw std::invalid_argument("No data avaliable for session");
-  }
-
-  return it->second;
-}
-
 
 }  // namespace nsys::devicecontrol

@@ -14,8 +14,20 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set compiler flags
-set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-msse4 -O2 -Wall -Wextra")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -flto -ffunction-sections -fdata-sections")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-Os -msse4")
+link_libraries("-flto -Wl,--gc-sections")
+
+# set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_CXX_FLAGS "-msse4 -O2 -Wall -Wextra -flto -ffunction-sections -fdata-sections")
+# add_compile_options("-msse4 -O2 -Wall -Wextra -flto -ffunction-sections -fdata-sections")
+# link_libraries("-flto -Wl,--gc-sections")
+# n -ffunction-section & -fdata-sections options of gcc ...
 
 # Include files
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -51,5 +63,5 @@ add_subdirectory(thirdparty/spdlog)
 
 # Our target
 add_executable(learncpp ${SOURCES})
-# 
-target_link_libraries(learncpp Threads::Threads absl::base absl::memory nlohmann_json::nlohmann_json)
+# absl::base absl::memory 
+target_link_libraries(learncpp Threads::Threads absl::memory nlohmann_json::nlohmann_json)
